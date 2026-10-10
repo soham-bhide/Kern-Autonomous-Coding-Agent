@@ -2,9 +2,6 @@
   "name": "kern",
   "module": "index.ts",
   "type": "module",
-  "bin": {
-    "kern": "./dist/index.js"
-  },
   "private": true,
   "devDependencies": {
     "@types/bun": "latest"
@@ -13,7 +10,8 @@
     "typescript": "^7"
   },
   "dependencies": {
-    "@ai-sdk/groq": "^4.0.57",
-    "ai": "^7.0.130"
+    "@ai-sdk/groq": "^4.0.59",
+    "ai": "^7.0.137",
+    "zod": "^4.6.5"
   }
 }
