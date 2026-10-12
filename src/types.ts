@@ -19,7 +19,7 @@ export type UserMessage = {
 
 export type AssistantMessage = {
   role: "assistant";
-  content: TextBlock[]; // FIX: a LIST of blocks
+  content: TextBlock[]; 
   usage: Usage;
   stopReason: StopReason;
 };

@@ -1,16 +1,60 @@
-import {groq} from "@ai-sdk/groq";
+#!/usr/bin/env bun
+import { groq } from "@ai-sdk/groq";
 import { streamText } from "ai";
+import { createInterface } from "node:readline/promises";
+import { stdin, stdout } from "node:process";
+import type { Message } from "./types.ts";
 
-async function  askGroq(prompt:string){
-    const answer = streamText({
-        model: groq("openai/gpt-oss-120b"),
-        prompt,
-        temperature:0,
-        maxOutputTokens:300,
-    })
+const model = groq("openai/gpt-oss-120b");
+const messages: Message[] = [];
 
-    for await(const chunk of answer.textStream){
-        process.stdout.write(chunk)
+function toSdk(messages: Message[]) {
+  return messages.map((m) => {
+    if (m.role === "user") {
+      return { role: "user" as const, content: m.content };
     }
+    return {
+      role: "assistant" as const,
+      content: m.content.map((b) => b.text).join(""), 
+    };
+  });
 }
-askGroq("create a function that takes a string and returns the reverse of the string in TypeScript")
+
+async function main() {
+  const rl = createInterface({ input: stdin, output: stdout });
+
+  while (true) {
+    const line = await rl.question("\nyou> ");
+    if (line.trim() === "exit") break;
+    if (line.trim() === "") continue;
+
+    messages.push({ role: "user", content: line });
+
+    const result = streamText({ model, messages: toSdk(messages) });
+
+    for await (const delta of result.textStream) {
+      process.stdout.write(delta);
+    }
+    console.log(); 
+
+    const text = await result.text;
+    const usage = await result.usage;
+    const finishReason = await result.finishReason;
+
+   
+
+    messages.push({
+      role: "assistant",
+      content: [{ type: "text", text }],
+      usage: {
+        input: usage.inputTokens ?? 0,
+        output: usage.outputTokens ?? 0,
+      },
+      stopReason: finishReason === "length" ? "length" : "stop",
+    });
+  }
+
+  rl.close();
+}
+
+await main(); 
